@@ -1,0 +1,20 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Generate temporary test credentials
+        run: python scripts/init_env.py
+      - name: Check lock file
+        run: docker compose --profile test run --build --rm --no-deps test poetry check --lock
+      - name: Run checks and PostgreSQL tests
+        run: docker compose --profile test run --build --rm test
+      - name: Clean up
+        if: always()
+        run: docker compose down -v --remove-orphans
